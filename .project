@@ -1,130 +1,225 @@
 package project;
-import java.util.Scanner;
-public class colorquiz {
-	    static Scanner sc = new Scanner(System.in);
 
-	    // 🎨 Colors
-	    static final String RESET = "\u001B[0m";
-	    static final String RED = "\u001B[31m";
-	    static final String GREEN = "\u001B[32m";
-	    static final String YELLOW = "\u001B[33m";
-	    static final String BLUE = "\u001B[34m";
-	    static final String CYAN = "\u001B[36m";
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
 
-	    public static void main(String[] args) {
+public class KBCAdvanced extends JFrame implements ActionListener {
 
-	        String questions[] = {
-	                "Capital of India?",
-	                "2 + 2 = ?",
-	                "Largest planet?",
-	                "Java is a?",
-	                "National animal of India?",
-	                "10 * 5 = ?",
-	                "Which is not a programming language?",
-	                "Sun is a?",
-	                "Fastest animal?",
-	                "Founder of Microsoft?"
-	        };
+    JLabel questionLabel, moneyLabel, timerLabel;
+    JButton A, B, C, D, lifeline, quit;
 
-	        String options[][] = {
-	                {"A. Delhi", "B. Mumbai", "C. Kolkata", "D. Chennai"},
-	                {"A. 3", "B. 4", "C. 5", "D. 6"},
-	                {"A. Earth", "B. Mars", "C. Jupiter", "D. Venus"},
-	                {"A. Language", "B. OS", "C. Browser", "D. Hardware"},
-	                {"A. Tiger", "B. Lion", "C. Elephant", "D. Dog"},
-	                {"A. 40", "B. 50", "C. 60", "D. 30"},
-	                {"A. Java", "B. Python", "C. HTML", "D. C++"},
-	                {"A. Planet", "B. Star", "C. Galaxy", "D. Moon"},
-	                {"A. Tiger", "B. Lion", "C. Cheetah", "D. Dog"},
-	                {"A. Steve Jobs", "B. Bill Gates", "C. Elon Musk", "D. Mark"}
-	        };
+    int qIndex = 0, total = 0, safeAmount = 0;
+    int timeLeft = 40;   // ✅ Timer set to 40 seconds
 
-	        char answers[] = {'A','B','C','A','A','B','C','C','C','B'};
+    Timer timer;
 
-	        int rewards[] = {1000,2000,3000,5000,10000,20000,40000,80000,160000,320000};
+    boolean used5050 = false, usedAudience = false, usedSkip = false;
 
-	        boolean lifeline5050 = true;
-	        boolean audience = true;
-	        boolean skip = true;
+    String questions[] = {
+            "Capital of India?",
+            "2 + 2 = ?",
+            "Largest planet?",
+            "Java is a?",
+            "National animal?",
+            "10 * 5 = ?",
+            "Not a language?",
+            "Sun is a?",
+            "Fastest animal?",
+            "Founder of Microsoft?"
+    };
 
-	        int total = 0;
-	        int safeAmount = 0;
+    String options[][] = {
+            {"Delhi","Mumbai","Kolkata","Chennai"},
+            {"3","4","5","6"},
+            {"Earth","Mars","Jupiter","Venus"},
+            {"Language","OS","Browser","Hardware"},
+            {"Tiger","Lion","Elephant","Dog"},
+            {"40","50","60","30"},
+            {"Java","Python","HTML","C++"},
+            {"Planet","Star","Galaxy","Moon"},
+            {"Tiger","Lion","Cheetah","Dog"},
+            {"Steve Jobs","Bill Gates","Elon Musk","Mark"}
+    };
 
-	        System.out.println(CYAN + " Welcome to KBC Game " + RESET);
+    char answers[] = {'A','B','C','A','A','B','C','B','C','B'};
+    int rewards[] = {1000,2000,3000,5000,10000,20000,40000,80000,160000,320000};
 
-	        for (int i = 0; i < 10; i++) {
+    public KBCAdvanced() {
 
-	            System.out.println("\n" + BLUE + "Q" + (i+1) + ": " + questions[i] + RESET);
+        setTitle("KBC Game");
+        setSize(600,450);
+        setLayout(new GridLayout(9,1));
+        getContentPane().setBackground(Color.BLACK);
 
-	            for (int j = 0; j < 4; j++) {
-	                System.out.println(options[i][j]);
-	            }
+        questionLabel = new JLabel("", JLabel.CENTER);
+        questionLabel.setForeground(Color.WHITE);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
-	            if (i < 8) {
-	                System.out.println(YELLOW + "L. Lifeline" + RESET);
-	            }
-	            System.out.println(RED + "Q. Quit" + RESET);
+        timerLabel = new JLabel("Time: 40", JLabel.CENTER);
+        timerLabel.setForeground(Color.YELLOW);
 
-	            System.out.print(GREEN + "Enter your answer: " + RESET);
-	            char choice = sc.next().toUpperCase().charAt(0);
+        moneyLabel = new JLabel("Money: 0", JLabel.CENTER);
+        moneyLabel.setForeground(Color.GREEN);
 
-	            // Quit
-	            if (choice == 'Q') {
-	                System.out.println(YELLOW + "You quit the game!" + RESET);
-	                break;
-	            }
+        A = createButton();
+        B = createButton();
+        C = createButton();
+        D = createButton();
 
-	            // Lifeline
-	            if (choice == 'L' && i < 8) {
+        lifeline = createButton("Lifeline");
+        quit = createButton("Quit");
 
-	                System.out.println(CYAN + "Choose Lifeline:" + RESET);
-	                System.out.println("1. 50-50");
-	                System.out.println("2. Audience Poll");
-	                System.out.println("3. Skip Question");
+        add(questionLabel);
+        add(timerLabel);
+        add(A); add(B); add(C); add(D);
+        add(lifeline); add(quit);
+        add(moneyLabel);
 
-	                int life = sc.nextInt();
+        loadQuestion();
+        startTimer();
 
-	                if (life == 1 && lifeline5050) {
-	                    lifeline5050 = false;
-	                    System.out.println(YELLOW + "50-50 Lifeline Used!" + RESET);
-	                    System.out.println(options[i][0]);
-	                    System.out.println(options[i][2]);
-	                    i--; continue;
+        setVisible(true);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+    }
 
-	                } else if (life == 2 && audience) {
-	                    audience = false;
-	                    System.out.println(YELLOW + "Audience says: " + answers[i] + RESET);
-	                    i--; continue;
+    JButton createButton() {
+        JButton btn = new JButton();
+        btn.setBackground(Color.DARK_GRAY);
+        btn.setForeground(Color.WHITE);
+        btn.addActionListener(this);
+        return btn;
+    }
 
-	                } else if (life == 3 && skip) {
-	                    skip = false;
-	                    System.out.println(YELLOW + "Question Skipped!" + RESET);
-	                    continue;
+    JButton createButton(String text) {
+        JButton btn = createButton();
+        btn.setText(text);
+        return btn;
+    }
 
-	                } else {
-	                    System.out.println(RED + "Lifeline already used!" + RESET);
-	                    i--; continue;
-	                }
-	            }
+    void startTimer() {
+        timer = new Timer(1000, e -> {
+            timeLeft--;
+            timerLabel.setText("Time: " + timeLeft);
 
-	            // Check answer
-	            if (choice == answers[i]) {
-	                System.out.println(GREEN + " Correct Answer!" + RESET);
-	                total = rewards[i];
+            if (timeLeft == 0) {
+                timer.stop();
+                JOptionPane.showMessageDialog(this, "Time Up!");
+                total = safeAmount; // go to safe amount
+                gameOver();
+            }
+        });
+        timer.start();
+    }
 
-	                if (i == 4) safeAmount = rewards[4]; // Q5 safe
-	                if (i == 6) safeAmount = rewards[6]; // Q7 safe
+    void resetTimer() {
+        timeLeft = 40;
+        timerLabel.setText("Time: 40");
+    }
 
-	                System.out.println(CYAN + "You won: " + total + RESET);
+    void loadQuestion() {
 
-	            } else {
-	                System.out.println(RED + " Wrong Answer!" + RESET);
-	                total = safeAmount;
-	                break;
-	            }
-	        }
+        if (qIndex >= 10) {
+            gameOver();
+            return;
+        }
 
-	        System.out.println("\n" + BLUE + " Game Over!" + RESET);
-	        System.out.println(GREEN + "Total Winning Amount: " + total + RESET);
-	    }
-	}
+        questionLabel.setText("Q" + (qIndex+1) + ": " + questions[qIndex]);
+
+        A.setText("A. " + options[qIndex][0]);
+        B.setText("B. " + options[qIndex][1]);
+        C.setText("C. " + options[qIndex][2]);
+        D.setText("D. " + options[qIndex][3]);
+
+        lifeline.setEnabled(qIndex < 8);
+
+        // Enable all options again (important after 50-50)
+        A.setEnabled(true);
+        B.setEnabled(true);
+        C.setEnabled(true);
+        D.setEnabled(true);
+
+        resetTimer();
+    }
+
+    public void actionPerformed(ActionEvent e) {
+
+        if (e.getSource() == quit) {
+            total = safeAmount;
+            gameOver();
+        }
+
+        if (e.getSource() == lifeline && qIndex < 8) {
+            showLifeline();
+            return;
+        }
+
+        char selected = ' ';
+
+        if (e.getSource() == A) selected = 'A';
+        if (e.getSource() == B) selected = 'B';
+        if (e.getSource() == C) selected = 'C';
+        if (e.getSource() == D) selected = 'D';
+
+        checkAnswer(selected);
+    }
+
+    void checkAnswer(char selected) {
+
+        if (selected == answers[qIndex]) {
+
+            // ✅ Only add money at Q5 and Q7
+            if (qIndex == 4 || qIndex == 6) {
+                total = rewards[qIndex];
+                safeAmount = total; // safe point
+                moneyLabel.setText("Money: " + total);
+            }
+
+            qIndex++;
+            loadQuestion();
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Wrong Answer!");
+            total = safeAmount;
+            gameOver();
+        }
+    }
+
+    void showLifeline() {
+
+        String input = JOptionPane.showInputDialog(
+                "1. 50-50\n2. Audience\n3. Skip");
+
+        int ch = Integer.parseInt(input);
+
+        if (ch == 1 && !used5050) {
+            used5050 = true;
+            B.setEnabled(false);
+            D.setEnabled(false);
+
+        } else if (ch == 2 && !usedAudience) {
+            usedAudience = true;
+            JOptionPane.showMessageDialog(this,
+                    "Audience says: " + answers[qIndex]);
+
+        } else if (ch == 3 && !usedSkip) {
+            usedSkip = true;
+            qIndex++;
+            loadQuestion();
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Already Used!");
+        }
+    }
+
+    void gameOver() {
+        timer.stop();
+        JOptionPane.showMessageDialog(this,
+                "Game Over!\nWinning Amount: " + total);
+        System.exit(0);
+    }
+
+    public static void main(String[] args) {
+        new KBCAdvanced();
+    }
+}
